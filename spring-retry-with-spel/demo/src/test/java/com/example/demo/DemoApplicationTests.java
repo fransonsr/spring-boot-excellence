@@ -12,29 +12,28 @@ import java.util.concurrent.atomic.LongAdder;
 import static com.example.demo.DemoApplication.NonRetryableException;
 import static com.example.demo.DemoApplication.RetryableService;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class DemoApplicationTests {
 
-	@Resource
+    @Resource
     RetryableService service;
 
-	LongAdder invocations;
+    LongAdder invocations;
 
-	@Before
+    @Before
     public void setup() {
-	    invocations = new LongAdder();
+        invocations = new LongAdder();
     }
 
-	@Test
-	public void contextLoads() {
-	}
+    @Test
+    public void contextLoads() {
+    }
 
     @Test
-	public void retryExhausted() {
+    public void retryExhausted() {
         Throwable thrown = catchThrowable(() -> service.retryableMethod(() -> {
             invocations.increment();
             throw new RuntimeException();
@@ -46,9 +45,9 @@ public class DemoApplicationTests {
 
     @Test
     public void noRetry() {
-	    service.retryableMethod(() -> invocations.increment());
+        service.retryableMethod(() -> invocations.increment());
 
-	    assertThat(invocations.intValue()).isEqualTo(1);
+        assertThat(invocations.intValue()).isEqualTo(1);
     }
 
     @Test
@@ -63,6 +62,6 @@ public class DemoApplicationTests {
         }));
 
         assertThat(thrown).isInstanceOf(NonRetryableException.class);
-	    assertThat(invocations.intValue()).isEqualTo(2);
+        assertThat(invocations.intValue()).isEqualTo(2);
     }
 }
