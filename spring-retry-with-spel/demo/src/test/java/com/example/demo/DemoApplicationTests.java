@@ -12,6 +12,8 @@ import java.util.concurrent.atomic.LongAdder;
 import static com.example.demo.DemoApplication.NonRetryableException;
 import static com.example.demo.DemoApplication.RetryableService;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -31,42 +33,36 @@ public class DemoApplicationTests {
 	public void contextLoads() {
 	}
 
-    private void executeServiceWithCatch(Runnable runnable) {
-        try {
-            service.retryableMethod(runnable);
-        }
-        catch (Exception e) {
-        }
-    }
-
     @Test
 	public void retryExhausted() {
-        executeServiceWithCatch(() -> {
+        Throwable thrown = catchThrowable(() -> service.retryableMethod(() -> {
             invocations.increment();
             throw new RuntimeException();
-        });
+        }));
 
+        assertThat(thrown).isInstanceOf(RuntimeException.class);
         assertThat(invocations.intValue()).isEqualTo(3);
     }
 
     @Test
     public void noRetry() {
-	    executeServiceWithCatch(() -> invocations.increment());
+	    service.retryableMethod(() -> invocations.increment());
 
 	    assertThat(invocations.intValue()).isEqualTo(1);
     }
 
     @Test
     public void retryWithNonRetryableException() {
-	    executeServiceWithCatch(() -> {
-	        invocations.increment();
-	        if (invocations.intValue() > 1) {
-	            throw new NonRetryableException();
+        Throwable thrown = catchThrowable(() -> service.retryableMethod(() -> {
+            invocations.increment();
+            if (invocations.intValue() > 1) {
+                throw new NonRetryableException();
             }
 
             throw new RuntimeException();
-        });
+        }));
 
+        assertThat(thrown).isInstanceOf(NonRetryableException.class);
 	    assertThat(invocations.intValue()).isEqualTo(2);
     }
 }
